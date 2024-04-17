@@ -78,7 +78,7 @@ def main():
 
     song = []
     transition_matrix = build_matrix_and_initial(note_list)
-    next_state = np.random.rand(7)
+    next_state = np.random.rand(7).T
     next_state /= np.sum(next_state)
     for _ in range(25):
         max_prob = 0
@@ -88,7 +88,7 @@ def main():
                 max_prob_idx = j
                 max_prob = prob
         song.append(chr(ord('A')+max_prob_idx))
-        next_state = transition_matrix @ next_state
+        next_state = next_state @ transition_matrix
 
     print(song)
     create_midi(song)
