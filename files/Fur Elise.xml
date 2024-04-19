@@ -225,7 +225,7 @@
         <staff>1</staff>
         <beam number="1">continue</beam>
         <beam number="2">continue</beam>
-        </note>
+      </note>
       <note default-x="154.94" default-y="-15.00">
         <pitch>
           <step>C</step>

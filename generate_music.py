@@ -2,6 +2,8 @@ import numpy as np
 import os
 import xml.etree.ElementTree as ET
 from midiutil import MIDIFile
+import random
+
 
 switcher = {
     "C": 0,
@@ -11,7 +13,7 @@ switcher = {
     "G": 7,
     "A": 9,
     "B": 11,
-    }
+}
 
 def extract_data(file):
     res = []
@@ -43,7 +45,7 @@ def build_matrix_and_initial(note_list):
     return transition_matrix
 
 def get_pitch(step):
-    octave = 5
+    octave = 2
     base_octave_val = 12*octave + 24
     note_val = base_octave_val + switcher[step]
     return note_val
@@ -57,7 +59,7 @@ def create_midi(song):
     volume   = 100
     output_midi = MIDIFile(1)
     output_midi.addTempo(track, time, tempo)
-    output_midi.addProgramChange(track, channel, time, 40)
+    output_midi.addProgramChange(track, channel, time, 0)
 
     time = 0.0
     for step in song:
@@ -69,8 +71,22 @@ def create_midi(song):
     with open("music.mid", "wb") as output_file:
         output_midi.writeFile(output_file)
 
+def simulate_distribution_np(probabilities):
+    # Step 1: Normalize probabilities
+    probabilities = np.array(probabilities)
+    normalized_probabilities = probabilities / np.sum(probabilities)
+    
+    # Step 2: Generate a random number between 0 and 1
+    rand_num = np.random.rand()
+    
+    # Step 3: Find the index where cumulative probability exceeds the random number
+    cumulative_prob = np.cumsum(normalized_probabilities)
+    selected_index = np.argmax(cumulative_prob >= rand_num)
+    
+    return selected_index
+
 def main():
-    files = ["files/"+file for file in os.listdir("files/") if "musicxml" in file and "py" not in file]
+    files = ["files/"+file for file in os.listdir("files/")]
     note_list = []
     for file in files:
         note_list.extend(extract_data(file))
@@ -80,14 +96,11 @@ def main():
     transition_matrix = build_matrix_and_initial(note_list)
     next_state = np.random.rand(7).T
     next_state /= np.sum(next_state)
-    for _ in range(25):
-        max_prob = 0
-        max_prob_idx = 0
-        for j, prob in enumerate(next_state):
-            if prob > max_prob:
-                max_prob_idx = j
-                max_prob = prob
-        song.append(chr(ord('A')+max_prob_idx))
+    for _ in range(30):
+        idx = simulate_distribution_np(next_state)
+        song.append(chr(ord('A')+idx))
+        next_state = np.zeros(7)
+        next_state[idx] = 1
         next_state = next_state @ transition_matrix
 
     print(song)
